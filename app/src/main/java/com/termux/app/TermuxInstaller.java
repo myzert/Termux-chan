@@ -168,6 +168,9 @@ final class TermuxInstaller {
                                     if (parts.length != 2)
                                         throw new RuntimeException("Malformed symlink line: " + line);
                                     String oldPath = parts[0];
+                                    if (oldPath.contains("com.termux")) {
+                                        oldPath = oldPath.replace("com.termux", com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME);
+                                    }
                                     String newPath = TERMUX_STAGING_PREFIX_DIR_PATH + "/" + parts[1];
                                     symlinks.add(Pair.create(oldPath, newPath));
 
