@@ -403,7 +403,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                     try {
                         // START TERMUX CHANT FASTFETCH ASSET SETUP
                         try {
-                            java.io.File fastfetchDir = new java.io.File(com.termux.shared.models.paths.TermuxEnvironment.HOME_PATH, ".config/fastfetch/anime");
+                            java.io.File fastfetchDir = new java.io.File(com.termux.shared.termux.TermuxConstants.TERMUX_HOME_DIR_PATH, ".config/fastfetch/anime");
                             if (!fastfetchDir.exists()) fastfetchDir.mkdirs();
                             java.io.File defaultImg = new java.io.File(fastfetchDir, "default.png");
                             if (!defaultImg.exists()) {
@@ -413,7 +413,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                                 while ((len = is.read(buf)) > 0) fos.write(buf, 0, len);
                                 fos.close(); is.close();
                             }
-                            java.io.File bashrc = new java.io.File(com.termux.shared.models.paths.TermuxEnvironment.HOME_PATH, ".bashrc");
+                            java.io.File bashrc = new java.io.File(com.termux.shared.termux.TermuxConstants.TERMUX_HOME_DIR_PATH, ".bashrc");
                             if (!bashrc.exists()) {
                                 java.io.FileWriter fw = new java.io.FileWriter(bashrc, true);
                                 fw.write("\n# TERMUX CHANT fastfetch integration\n");
