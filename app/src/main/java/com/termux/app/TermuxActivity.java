@@ -228,6 +228,25 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         setMargins();
 
+        // [TERMUX CHANT] Load default anime wallpaper if none is set
+        if (com.termux.view.TerminalView.sWallpaper == null) {
+            try {
+                android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                String customWallpaperUri = prefs.getString("custom_wallpaper_uri", null);
+                if (customWallpaperUri != null) {
+                    java.io.InputStream is = getContentResolver().openInputStream(android.net.Uri.parse(customWallpaperUri));
+                    com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeStream(is);
+                    is.close();
+                } else {
+                    java.io.InputStream is = getAssets().open("anime/default.png");
+                    com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeStream(is);
+                    is.close();
+                }
+            } catch (Exception e) {
+                Logger.logError(LOG_TAG, "Failed to load wallpaper: " + e.getMessage());
+            }
+        }
+        
         mTermuxActivityRootView = findViewById(R.id.activity_termux_root_view);
         mTermuxActivityRootView.setActivity(this);
         mTermuxActivityBottomSpaceView = findViewById(R.id.activity_termux_bottom_space_view);

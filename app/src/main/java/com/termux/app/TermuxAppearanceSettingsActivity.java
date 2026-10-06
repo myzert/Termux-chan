@@ -78,6 +78,10 @@ public class TermuxAppearanceSettingsActivity extends Activity {
             Uri uri = data.getData();
             if (requestCode == PICK_IMAGE_REQUEST) {
                 try {
+                    // Save to preferences to persist
+                    android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                    prefs.edit().putString("custom_wallpaper_uri", uri.toString()).apply();
+                    
                     InputStream is = getContentResolver().openInputStream(uri);
                     TerminalView.sWallpaper = BitmapFactory.decodeStream(is);
                     is.close();
