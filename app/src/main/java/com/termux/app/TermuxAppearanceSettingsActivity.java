@@ -117,12 +117,21 @@ public class TermuxAppearanceSettingsActivity extends Activity {
             Uri uri = data.getData();
             if (requestCode == PICK_IMAGE_REQUEST) {
                 try {
-                    android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-                    prefs.edit().putString("custom_wallpaper_uri", uri.toString()).apply();
-                    
                     InputStream is = getContentResolver().openInputStream(uri);
-                    TerminalView.sWallpaper = BitmapFactory.decodeStream(is);
+                    File wallpaperFile = new File(getFilesDir(), "custom_wallpaper.png");
+                    FileOutputStream fos = new FileOutputStream(wallpaperFile);
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = is.read(buffer)) != -1) {
+                        fos.write(buffer, 0, len);
+                    }
+                    fos.close();
                     is.close();
+                    
+                    android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                    prefs.edit().putString("custom_wallpaper_uri", wallpaperFile.getAbsolutePath()).apply();
+                    
+                    TerminalView.sWallpaper = BitmapFactory.decodeFile(wallpaperFile.getAbsolutePath());
                     Toast.makeText(this, "Wallpaper berhasil diubah!", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     Toast.makeText(this, "Gagal memuat gambar", Toast.LENGTH_SHORT).show();

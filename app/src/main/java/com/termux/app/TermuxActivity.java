@@ -242,9 +242,14 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
                 if ("disabled".equals(customWallpaperUri)) {
                     com.termux.view.TerminalView.sWallpaper = null;
                 } else if (customWallpaperUri != null) {
-                    java.io.InputStream is = getContentResolver().openInputStream(android.net.Uri.parse(customWallpaperUri));
-                    com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeStream(is);
-                    is.close();
+                    if (customWallpaperUri.startsWith("content://")) {
+                        // Fallback for old saved URIs
+                        java.io.InputStream is = getContentResolver().openInputStream(android.net.Uri.parse(customWallpaperUri));
+                        com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeStream(is);
+                        is.close();
+                    } else {
+                        com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeFile(customWallpaperUri);
+                    }
                 } else {
                     java.io.InputStream is = getAssets().open("anime/default.png");
                     com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeStream(is);
