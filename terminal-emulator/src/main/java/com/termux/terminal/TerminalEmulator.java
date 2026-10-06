@@ -2666,7 +2666,7 @@ public final class TerminalEmulator {
                     }
                 }
             } catch (Exception e) {
-                Logger.logError(mClient, LOG_TAG, "Error decoding kitty image", e);
+                Logger.logError(mClient, LOG_TAG, "Error decoding kitty image: " + e.getMessage());
             }
         }
     }
