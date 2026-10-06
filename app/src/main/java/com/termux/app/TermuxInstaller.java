@@ -233,19 +233,27 @@ final class TermuxInstaller {
                             File dpkgReal = new File(TERMUX_STAGING_PREFIX_DIR_PATH, "bin/dpkg.real");
                             if (dpkgBin.renameTo(dpkgReal)) {
                                 String wrapper = "#!" + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/bash\n" +
-                                        com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/dpkg.real \"$@\"\n" +
+                                        "declare -a args=()\n" +
+                                        "patched=0\n" +
+                                        "for arg in \"$@\"; do\n" +
+                                        "    if [[ \"$arg\" == *.deb ]]; then\n" +
+                                        "        tmpdir=$(" + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/mktemp -d -p " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/tmp dpkg_patch_XXXXXX)\n" +
+                                        "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/dpkg-deb -R \"$arg\" \"$tmpdir/ext\" >/dev/null 2>&1\n" +
+                                        "        if [ -d \"$tmpdir/ext/data/data/com.termux\" ]; then\n" +
+                                        "            " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/mv \"$tmpdir/ext/data/data/com.termux\" \"$tmpdir/ext/data/data/" + com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + "\"\n" +
+                                        "        fi\n" +
+                                        "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/find \"$tmpdir/ext\" -type f \\! -name \"*.apk\" \\! -name \"*.gz\" \\! -name \"*.png\" \\! -name \"*.jpg\" \\! -name \"*.gpg\" \\! -name \"*.zip\" \\! -name \"*.dex\" -exec " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/sed -i 's/com.termux/" + com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + "/g' {} + 2>/dev/null\n" +
+                                        "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/dpkg-deb -b \"$tmpdir/ext\" \"$tmpdir/patched.deb\" >/dev/null 2>&1\n" +
+                                        "        args+=(\"$tmpdir/patched.deb\")\n" +
+                                        "        patched=1\n" +
+                                        "    else\n" +
+                                        "        args+=(\"$arg\")\n" +
+                                        "    fi\n" +
+                                        "done\n" +
+                                        com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/dpkg.real \"${args[@]}\"\n" +
                                         "res=$?\n" +
-                                        "if [[ \" $* \" == *\" --unpack \"* ]] || [[ \" $* \" == *\" -i \"* ]] || [[ \" $* \" == *\" --install \"* ]]; then\n" +
-                                        "    for list in $(" + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/find " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/var/lib/dpkg/info -name \"*.list\" -mmin -5 2>/dev/null); do\n" +
-                                        "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/cat \"$list\" | while read -r file; do\n" +
-                                        "            if [ -f \"$file\" ]; then\n" +
-                                        "                case \"$file\" in\n" +
-                                        "                    *.apk|*.gz|*.png|*.jpg|*.gpg|*.zip|*.deb|*.xz|*.tar.*|*.a|*.dex) ;;\n" +
-                                        "                    *) " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/sed -i 's/com.termux/" + com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + "/g' \"$file\" 2>/dev/null ;;\n" +
-                                        "                esac\n" +
-                                        "            fi\n" +
-                                        "        done\n" +
-                                        "    done\n" +
+                                        "if [ \"$patched\" = \"1\" ]; then\n" +
+                                        "    " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/rm -rf " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/tmp/dpkg_patch_* 2>/dev/null\n" +
                                         "fi\n" +
                                         "exit $res\n";
                                 try (java.io.FileOutputStream fos = new java.io.FileOutputStream(dpkgBin)) {
