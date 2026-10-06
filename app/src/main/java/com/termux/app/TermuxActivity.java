@@ -232,8 +232,16 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         if (com.termux.view.TerminalView.sWallpaper == null) {
             try {
                 android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                
+                // Load Opacity
+                com.termux.view.TerminalView.sOpacity = prefs.getInt("terminal_opacity", 180);
+                
+
+                // Load Wallpaper
                 String customWallpaperUri = prefs.getString("custom_wallpaper_uri", null);
-                if (customWallpaperUri != null) {
+                if ("disabled".equals(customWallpaperUri)) {
+                    com.termux.view.TerminalView.sWallpaper = null;
+                } else if (customWallpaperUri != null) {
                     java.io.InputStream is = getContentResolver().openInputStream(android.net.Uri.parse(customWallpaperUri));
                     com.termux.view.TerminalView.sWallpaper = android.graphics.BitmapFactory.decodeStream(is);
                     is.close();
