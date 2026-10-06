@@ -211,6 +211,52 @@ final class TermuxInstaller {
                         }
                     }
 
+                    File amScript = new File(TERMUX_STAGING_PREFIX_DIR_PATH, "bin/am");
+                    if (amScript.exists()) {
+                        try {
+                            byte[] amBytes = new byte[(int) amScript.length()];
+                            try (java.io.FileInputStream fis = new java.io.FileInputStream(amScript)) {
+                                fis.read(amBytes);
+                            }
+                            String amContent = new String(amBytes, java.nio.charset.StandardCharsets.UTF_8);
+                            amContent = amContent.replace(com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + ".termuxam", "com.termux.termuxam");
+                            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(amScript)) {
+                                fos.write(amContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                            }
+                        } catch (Exception e) {
+                            Logger.logStackTraceWithMessage(LOG_TAG, "Failed to fix bin/am", e);
+                        }
+                    }
+                    File dpkgBin = new File(TERMUX_STAGING_PREFIX_DIR_PATH, "bin/dpkg");
+                    if (dpkgBin.exists()) {
+                        try {
+                            File dpkgReal = new File(TERMUX_STAGING_PREFIX_DIR_PATH, "bin/dpkg.real");
+                            if (dpkgBin.renameTo(dpkgReal)) {
+                                String wrapper = "#!" + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/bash\n" +
+                                        com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/dpkg.real \"$@\"\n" +
+                                        "res=$?\n" +
+                                        "if [[ \" $* \" == *\" --unpack \"* ]] || [[ \" $* \" == *\" -i \"* ]] || [[ \" $* \" == *\" --install \"* ]]; then\n" +
+                                        "    for list in $(" + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/find " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/var/lib/dpkg/info -name \"*.list\" -mmin -5 2>/dev/null); do\n" +
+                                        "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/cat \"$list\" | while read -r file; do\n" +
+                                        "            if [ -f \"$file\" ]; then\n" +
+                                        "                case \"$file\" in\n" +
+                                        "                    *.apk|*.gz|*.png|*.jpg|*.gpg|*.zip|*.deb|*.xz|*.tar.*|*.a|*.dex) ;;\n" +
+                                        "                    *) " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/sed -i 's/com.termux/" + com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + "/g' \"$file\" 2>/dev/null ;;\n" +
+                                        "                esac\n" +
+                                        "            fi\n" +
+                                        "        done\n" +
+                                        "    done\n" +
+                                        "fi\n" +
+                                        "exit $res\n";
+                                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(dpkgBin)) {
+                                    fos.write(wrapper.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                                }
+                                Os.chmod(dpkgBin.getAbsolutePath(), 0700);
+                            }
+                        } catch (Exception e) {
+                            Logger.logStackTraceWithMessage(LOG_TAG, "Failed to wrap dpkg", e);
+                        }
+                    }
                     if (symlinks.isEmpty())
                         throw new RuntimeException("No SYMLINKS.txt encountered");
                     for (Pair<String, String> symlink : symlinks) {
