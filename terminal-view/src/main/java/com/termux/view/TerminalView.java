@@ -1024,24 +1024,22 @@ public final class TerminalView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mEmulator == null) {
-            canvas.drawColor(0XFF000000);
+        if (mClient == null) return;
+        
+        int bgColor = (mEmulator != null) ? mEmulator.mColors.mCurrentColors[com.termux.terminal.TextStyle.COLOR_INDEX_BACKGROUND] : 0xFF000000;
+        
+        // [TERMUX CHANT] Custom UI drawing
+        if (sWallpaper != null && mEmulator != null) {
+            canvas.drawBitmap(sWallpaper, null, new android.graphics.Rect(0, 0, getWidth(), getHeight()), null);
+            canvas.drawColor((bgColor & 0x00FFFFFF) | (sOpacity << 24));
         } else {
-            // [TERMUX CHANT] Custom UI drawing
-            if (sWallpaper != null) {
-                canvas.drawBitmap(sWallpaper, null, new android.graphics.Rect(0, 0, getWidth(), getHeight()), null);
-                int bgColor = mEmulator.mColors.mCurrentColors[com.termux.terminal.TextStyle.COLOR_INDEX_BACKGROUND];
-                canvas.drawColor((bgColor & 0x00FFFFFF) | (sOpacity << 24));
-            } else {
-                int bgColor = mEmulator.mColors.mCurrentColors[com.termux.terminal.TextStyle.COLOR_INDEX_BACKGROUND];
-                canvas.drawColor(bgColor);
-            }
+            canvas.drawColor(bgColor);
+        }
 
+        if (mEmulator != null && mRenderer != null) {
             // [TERMUX CHANT] Custom font
-            if (sCustomTypeface != null && mRenderer != null) {
-                // We'd set the font on the renderer, but wait, Typeface is set in onSizeChanged/updateTextPaint?
-                // For a dynamic update we might need to recreate mRenderer or update its paint.
-                // We'll handle this in a custom refresh method.
+            if (sCustomTypeface != null) {
+                // Handled externally when updating mRenderer
             }
 
             // render the terminal view and highlight any selected text
