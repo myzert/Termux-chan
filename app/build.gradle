@@ -41,7 +41,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.termux"
+        applicationId "com.t.chan"
         minSdkVersion project.properties.minSdkVersion.toInteger()
         targetSdkVersion project.properties.targetSdkVersion.toInteger()
         versionCode 1

@@ -190,9 +190,7 @@ final class TermuxInstaller {
 
                                 if (!isDirectory) {
                                     try (FileOutputStream outStream = new FileOutputStream(targetFile)) {
-                                        int readBytes;
-                                        while ((readBytes = zipInput.read(buffer)) != -1)
-                                            outStream.write(buffer, 0, readBytes);
+                                        writeReplaced(zipInput, outStream, "com.termux".getBytes(), com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME.getBytes());
                                     }
                                     if (zipEntryName.startsWith("bin/") || zipEntryName.startsWith("libexec") ||
                                         zipEntryName.startsWith("lib/apt/apt-helper") || zipEntryName.startsWith("lib/apt/methods")) {
@@ -383,4 +381,31 @@ final class TermuxInstaller {
 
     public static native byte[] getZip();
 
+    public static void writeReplaced(java.io.InputStream in, java.io.OutputStream out, byte[] search, byte[] replace) throws java.io.IOException {
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            baos.write(buffer, 0, read);
+        }
+        byte[] data = baos.toByteArray();
+        
+        if (search.length != replace.length) throw new IllegalArgumentException("Lengths must match");
+        for (int i = 0; i <= data.length - search.length; i++) {
+            boolean match = true;
+            for (int j = 0; j < search.length; j++) {
+                if (data[i + j] != search[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                for (int j = 0; j < replace.length; j++) {
+                    data[i + j] = replace[j];
+                }
+                i += search.length - 1;
+            }
+        }
+        out.write(data);
+    }
 }
