@@ -193,7 +193,13 @@ final class TermuxInstaller {
 
                                 if (!isDirectory) {
                                     try (FileOutputStream outStream = new FileOutputStream(targetFile)) {
-                                        writeReplaced(zipInput, outStream, "com.termux".getBytes(), com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME.getBytes());
+                                        if (zipEntryName.endsWith(".apk") || zipEntryName.endsWith(".gz") || zipEntryName.endsWith(".gpg") || zipEntryName.endsWith(".png") || zipEntryName.endsWith(".jpg") || zipEntryName.endsWith(".zip")) {
+                                            int readBytes;
+                                            while ((readBytes = zipInput.read(buffer)) != -1)
+                                                outStream.write(buffer, 0, readBytes);
+                                        } else {
+                                            writeReplaced(zipInput, outStream, "com.termux".getBytes(), com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME.getBytes());
+                                        }
                                     }
                                     if (zipEntryName.startsWith("bin/") || zipEntryName.startsWith("libexec") ||
                                         zipEntryName.startsWith("lib/apt/apt-helper") || zipEntryName.startsWith("lib/apt/methods")) {
