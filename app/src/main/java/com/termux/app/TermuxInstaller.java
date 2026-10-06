@@ -201,6 +201,9 @@ final class TermuxInstaller {
                                             writeReplaced(zipInput, outStream, "com.termux".getBytes(), com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME.getBytes());
                                         }
                                     }
+                                    if (zipEntryName.endsWith(".apk")) {
+                                        ApkPatcher.patchApk(targetFile.getAbsolutePath());
+                                    }
                                     if (zipEntryName.startsWith("bin/") || zipEntryName.startsWith("libexec") ||
                                         zipEntryName.startsWith("lib/apt/apt-helper") || zipEntryName.startsWith("lib/apt/methods")) {
                                         //noinspection OctalInteger
@@ -211,22 +214,6 @@ final class TermuxInstaller {
                         }
                     }
 
-                    File amScript = new File(TERMUX_STAGING_PREFIX_DIR_PATH, "bin/am");
-                    if (amScript.exists()) {
-                        try {
-                            byte[] amBytes = new byte[(int) amScript.length()];
-                            try (java.io.FileInputStream fis = new java.io.FileInputStream(amScript)) {
-                                fis.read(amBytes);
-                            }
-                            String amContent = new String(amBytes, java.nio.charset.StandardCharsets.UTF_8);
-                            amContent = amContent.replace(com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + ".termuxam", "com.termux.termuxam");
-                            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(amScript)) {
-                                fos.write(amContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                            }
-                        } catch (Exception e) {
-                            Logger.logStackTraceWithMessage(LOG_TAG, "Failed to fix bin/am", e);
-                        }
-                    }
                     File dpkgBin = new File(TERMUX_STAGING_PREFIX_DIR_PATH, "bin/dpkg");
                     if (dpkgBin.exists()) {
                         try {
@@ -243,6 +230,8 @@ final class TermuxInstaller {
                                         "            " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/mv \"$tmpdir/ext/data/data/com.termux\" \"$tmpdir/ext/data/data/" + com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + "\"\n" +
                                         "        fi\n" +
                                         "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/find \"$tmpdir/ext\" -type f \\! -name \"*.apk\" \\! -name \"*.gz\" \\! -name \"*.png\" \\! -name \"*.jpg\" \\! -name \"*.gpg\" \\! -name \"*.zip\" \\! -name \"*.dex\" -exec " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/sed -i 's/com.termux/" + com.termux.shared.termux.TermuxConstants.TERMUX_PACKAGE_NAME + "/g' {} + 2>/dev/null\n" +
+                                        "        export CLASSPATH=\"" + activity.getPackageCodePath() + "\"\n" +
+                                        "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/find \"$tmpdir/ext\" -name \"*.apk\" -exec /system/bin/app_process -Xnoimage-dex2oat / com.termux.app.ApkPatcher {} \\;\n" +
                                         "        " + com.termux.shared.termux.TermuxConstants.TERMUX_PREFIX_DIR_PATH + "/bin/dpkg-deb -b \"$tmpdir/ext\" \"$tmpdir/patched.deb\" >/dev/null 2>&1\n" +
                                         "        args+=(\"$tmpdir/patched.deb\")\n" +
                                         "        patched=1\n" +
